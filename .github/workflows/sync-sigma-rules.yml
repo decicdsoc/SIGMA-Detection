@@ -1,0 +1,42 @@
+name: Sync Sigma Rules
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Every day at midnight UTC
+  workflow_dispatch:      # Allows manual trigger
+
+jobs:
+  sync-sigma-rules:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout this repo
+      uses: actions/checkout@v4
+
+    - name: Install Git
+      run: sudo apt-get update && sudo apt-get install -y git
+
+    - name: Clone Sigma repo
+      run: |
+        git clone --depth 1 https://github.com/SigmaHQ/sigma.git sigma-upstream
+
+    - name: Copy rules (Linux, Windows, Network)
+      run: |
+        mkdir -p rules/linux rules/windows rules/network
+
+        cp -ruv sigma-upstream/rules/linux/* rules/linux/
+        cp -ruv sigma-upstream/rules/windows/* rules/windows/
+        cp -ruv sigma-upstream/rules/network/* rules/network/
+
+    - name: Commit and push if changes
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+        git add rules/linux rules/windows rules/network
+        if git diff --cached --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Sync Sigma rules [$(date -u '+%Y-%m-%d %H:%M:%S')]"
+          git push
+        fi
