@@ -2,8 +2,8 @@ name: Sync Sigma Rules
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Every day at midnight UTC
-  workflow_dispatch:      # Allows manual trigger
+    - cron: '0 0 * * *'  # Daily
+  workflow_dispatch:
 
 jobs:
   sync-sigma-rules:
@@ -12,31 +12,35 @@ jobs:
     steps:
     - name: Checkout this repo
       uses: actions/checkout@v4
+      with:
+        persist-credentials: true
+        fetch-depth: 0  # Required for pushing
 
-    - name: Install Git
-      run: sudo apt-get update && sudo apt-get install -y git
-
-    - name: Clone Sigma repo
+    - name: Clone Sigma upstream repo
       run: |
         git clone --depth 1 https://github.com/SigmaHQ/sigma.git sigma-upstream
 
-    - name: Copy rules (Linux, Windows, Network)
+    - name: Prepare folders
       run: |
         mkdir -p rules/linux rules/windows rules/network
 
-        cp -ruv sigma-upstream/rules/linux/* rules/linux/
-        cp -ruv sigma-upstream/rules/windows/* rules/windows/
-        cp -ruv sigma-upstream/rules/network/* rules/network/
-
-    - name: Commit and push if changes
+    - name: Copy Sigma rules
       run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
+        cp -ruv sigma-upstream/rules/linux/* rules/linux/ || true
+        cp -ruv sigma-upstream/rules/windows/* rules/windows/ || true
+        cp -ruv sigma-upstream/rules/network/* rules/network/ || true
 
-        git add rules/linux rules/windows rules/network
+    - name: Configure Git
+      run: |
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+
+    - name: Commit and push if there are changes
+      run: |
+        git add rules/
         if git diff --cached --quiet; then
           echo "No changes to commit"
         else
-          git commit -m "Sync Sigma rules [$(date -u '+%Y-%m-%d %H:%M:%S')]"
-          git push
+          git commit -m "Update Sigma rules on $(date -u)"
+          git push origin main
         fi
