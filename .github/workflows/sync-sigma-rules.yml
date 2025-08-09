@@ -2,8 +2,8 @@ name: Sync Sigma Rules
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Every day at midnight UTC
-  workflow_dispatch:      # Manual trigger
+    - cron: '0 */8 * * *'  # Every 8 hours
+  workflow_dispatch:       # Manual trigger
 
 jobs:
   sync-sigma-rules:
@@ -16,17 +16,28 @@ jobs:
         persist-credentials: true
         fetch-depth: 0  # Needed for push
 
+    # SigmaHQ repo
     - name: Clone Sigma repo
       run: git clone --depth 1 https://github.com/SigmaHQ/sigma.git sigma-upstream
 
+    # Sublime Security rules
+    - name: Clone Sublime Security repo
+      run: git clone --depth 1 https://github.com/sublime-security/sublime-rules.git sublime-upstream
+
+    # Hayabusa Sysmon rules
+    - name: Clone Hayabusa rules repo
+      run: git clone --depth 1 https://github.com/Yamato-Security/hayabusa-rules.git hayabusa-upstream
+
     - name: Create folders if missing
-      run: mkdir -p rules/linux rules/windows rules/network
+      run: mkdir -p rules/linux rules/windows rules/network rules/detection-rules rules/sysmon
 
     - name: Copy updated rules
       run: |
         cp -ruv sigma-upstream/rules/linux/* rules/linux/ || true
         cp -ruv sigma-upstream/rules/windows/* rules/windows/ || true
         cp -ruv sigma-upstream/rules/network/* rules/network/ || true
+        cp -ruv sublime-upstream/detection-rules/* rules/detection-rules/ || true
+        cp -ruv hayabusa-upstream/sigma/sysmon/* rules/sysmon/ || true
 
     - name: Configure Git
       run: |
