@@ -16,23 +16,21 @@ jobs:
         persist-credentials: true
         fetch-depth: 0  # Needed for push
 
-    # Clone SigmaHQ repo
+    # SigmaHQ repo
     - name: Clone Sigma repo
       run: git clone --depth 1 https://github.com/SigmaHQ/sigma.git sigma-upstream
 
-    # Clone Sublime Security rules
+    # Sublime Security rules
     - name: Clone Sublime Security repo
       run: git clone --depth 1 https://github.com/sublime-security/sublime-rules.git sublime-upstream
 
-    # Clone Hayabusa Sysmon rules
+    # Hayabusa Sysmon rules
     - name: Clone Hayabusa rules repo
       run: git clone --depth 1 https://github.com/Yamato-Security/hayabusa-rules.git hayabusa-upstream
 
-    # Create folders if missing
     - name: Create folders if missing
       run: mkdir -p rules/linux rules/windows rules/network rules/detection-rules rules/sysmon
 
-    # Copy updated rules
     - name: Copy updated rules
       run: |
         cp -ruv sigma-upstream/rules/linux/* rules/linux/ || true
@@ -41,41 +39,17 @@ jobs:
         cp -ruv sublime-upstream/detection-rules/* rules/detection-rules/ || true
         cp -ruv hayabusa-upstream/sigma/sysmon/* rules/sysmon/ || true
 
-    # Build JSON for UI
-    - name: Build rules.json
+    - name: Configure Git
       run: |
-        pip install pyyaml
-        mkdir -p docs
-        python <<'EOF'
-        import yaml, json, pathlib
-        rules_data = []
-        for path in pathlib.Path("rules").rglob("*.yml"):
-            with open(path, "r", encoding="utf-8") as f:
-                try:
-                    data = yaml.safe_load(f)
-                except Exception as e:
-                    print(f"Skipping {path}: {e}")
-                    continue
-                rules_data.append({
-                    "title": data.get("title", ""),
-                    "id": data.get("id", ""),
-                    "status": data.get("status", ""),
-                    "logsource": data.get("logsource", {}).get("category", ""),
-                    "tags": data.get("tags", []),
-                    "description": data.get("description", ""),
-                    "path": str(path)
-                })
-        with open("docs/rules.json", "w", encoding="utf-8") as f:
-            json.dump(rules_data, f, indent=2)
-        EOF
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-    # Commit & Push if changes
     - name: Commit & Push if changes
       run: |
-        git add rules/ docs/rules.json
+        git add rules/
         if git diff --cached --quiet; then
           echo "No changes to commit"
         else
-          git commit -m "Update Sigma rules & dashboard on $(date -u)"
+          git commit -m "Update Sigma rules on $(date -u)"
           git push origin main
         fi
