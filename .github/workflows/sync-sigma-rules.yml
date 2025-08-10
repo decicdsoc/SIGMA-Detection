@@ -29,7 +29,7 @@ jobs:
       run: git clone --depth 1 https://github.com/Yamato-Security/hayabusa-rules.git hayabusa-upstream
 
     - name: Create folders if missing
-      run: mkdir -p rules/linux rules/windows rules/network rules/detection-rules rules/sysmon
+      run: mkdir -p rules/linux rules/windows rules/network rules/detection-rules rules/sysmon rules/all_rules
 
     - name: Copy updated rules
       run: |
@@ -38,6 +38,15 @@ jobs:
         cp -ruv sigma-upstream/rules/network/* rules/network/ || true
         cp -ruv sublime-upstream/detection-rules/* rules/detection-rules/ || true
         cp -ruv hayabusa-upstream/sigma/sysmon/* rules/sysmon/ || true
+
+    - name: Build all_rules folder
+      run: |
+        rm -rf rules/all_rules/*
+        find rules/linux -type f -exec cp -u {} rules/all_rules/ \; || true
+        find rules/windows -type f -exec cp -u {} rules/all_rules/ \; || true
+        find rules/network -type f -exec cp -u {} rules/all_rules/ \; || true
+        find rules/detection-rules -type f -exec cp -u {} rules/all_rules/ \; || true
+        find rules/sysmon -type f -exec cp -u {} rules/all_rules/ \; || true
 
     - name: Configure Git
       run: |
