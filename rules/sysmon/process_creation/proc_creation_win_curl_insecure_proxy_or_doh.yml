@@ -1,10 +1,10 @@
-title: Potential Cookies Session Hijacking
-id: fa52bf52-8477-2ed1-ddd2-b255351a0084
+title: Insecure Proxy/DOH Transfer Via Curl.EXE
+id: 286c1ff7-1bd6-b0c8-7e11-cd2c2e6eb437
 related:
-    - id: 5a6e1e16-07de-48d8-8aae-faa766c05e88
+    - id: 2c1486f5-02e8-4f86-9099-b97f2da4ed77
       type: derived
 status: test
-description: Detects execution of "curl.exe" with the "-c" flag in order to save cookie data.
+description: Detects execution of "curl.exe" with the "insecure" flag over proxy or DOH.
 references:
     - https://curl.se/docs/manpage.html
 author: Nasreddine Bencherchali (Nextron Systems)
@@ -23,11 +23,12 @@ detection:
         - Image|endswith: \curl.exe
         - OriginalFileName: curl.exe
     selection_cli:
-        - CommandLine|re: \s-c\s
-        - CommandLine|contains: --cookie-jar
+        CommandLine|contains:
+            - --doh-insecure
+            - --proxy-insecure
     condition: process_creation and (all of selection_*)
 falsepositives:
-    - Unknown
+    - Access to badly maintained internal or development systems
 level: medium
-regression_tests_path: regression_data/rules/windows/process_creation/proc_creation_win_curl_cookie_hijacking/info.yml
+regression_tests_path: regression_data/rules/windows/process_creation/proc_creation_win_curl_insecure_proxy_or_doh/info.yml
 ruletype: Sigma
