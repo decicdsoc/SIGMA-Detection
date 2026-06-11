@@ -11,8 +11,7 @@ modified: 2021-11-27
 tags:
     - attack.privilege-escalation
     - attack.persistence
-    - attack.execution
-    - attack.stealth
+    - attack.defense-evasion
     - attack.t1574.006
 logsource:
     product: linux
